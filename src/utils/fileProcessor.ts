@@ -5,6 +5,9 @@ import { fileToBase64, geminiOCR, geminiJsonToText } from "../lib/geminiOCR";
 
 export type FileKind = "text" | "pdf" | "image";
 
+export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
+const MAX_PDF_PAGES = 25;
+
 export function detectFileKind(file: File): FileKind {
   if (file.type.includes("pdf") || file.name.toLowerCase().endsWith(".pdf")) return "pdf";
   if (file.type.startsWith("image") || /\.(png|jpg|jpeg|gif|webp|bmp)$/i.test(file.name)) return "image";
@@ -27,14 +30,16 @@ async function fileToTextDirect(file: File): Promise<string> {
  * Extract text from PDF using pdfjs-dist page iteration.
  * Returns empty string if the PDF has no text layer (scanned PDF).
  */
-async function extractPdfText(file: File): Promise<string> {
+async function extractPdfText(file: File, signal?: AbortSignal): Promise<string> {
   try {
     const pdfjs = await import("pdfjs-dist/build/pdf.mjs");
     const arrayBuffer = await file.arrayBuffer();
     const loadingTask = pdfjs.getDocument({ data: new Uint8Array(arrayBuffer) });
     const pdf = await loadingTask.promise;
+    if (pdf.numPages > MAX_PDF_PAGES) throw new Error(`PDF exceeds the ${MAX_PDF_PAGES}-page limit.`);
     const textParts: string[] = [];
     for (let i = 1; i <= pdf.numPages; i++) {
+      if (signal?.aborted) throw new DOMException("File processing was cancelled", "AbortError");
       const page = await pdf.getPage(i);
       const textContent = await page.getTextContent();
       const pageText = textContent.items
@@ -43,7 +48,8 @@ async function extractPdfText(file: File): Promise<string> {
       textParts.push(pageText);
     }
     return textParts.join("\n");
-  } catch {
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") throw error;
     return "";
   }
 }
@@ -68,6 +74,7 @@ export interface ProcessedFile {
 
 export interface ProcessCallbacks {
   onStatus?: (message: string) => void;
+  signal?: AbortSignal;
 }
 
 /**
@@ -83,6 +90,10 @@ export async function processFile(
   kind: "current" | "previous",
   callbacks?: ProcessCallbacks
 ): Promise<ProcessedFile> {
+  if (file.size > MAX_UPLOAD_BYTES) {
+    throw new Error(`This file is too large. Please upload a file smaller than ${MAX_UPLOAD_BYTES / 1024 / 1024} MB.`);
+  }
+  if (callbacks?.signal?.aborted) throw new DOMException("File processing was cancelled", "AbortError");
   const fileKind = detectFileKind(file);
   const date = reportDate || new Date().toISOString().slice(0, 10);
 
@@ -105,7 +116,7 @@ export async function processFile(
   // 2. PDF: try local text extraction first
   if (fileKind === "pdf") {
     callbacks?.onStatus?.("Extracting text from PDF...");
-    const pdfText = await extractPdfText(file);
+    const pdfText = await extractPdfText(file, callbacks?.signal);
     if (pdfText.trim().length > 50) {
       const tests = parseLabText(pdfText, date).map((t) => ({ ...t, source: kind }));
       return { tests, rawText: pdfText, source: "pdf-text", collectionDate: date, labId: null };
@@ -124,7 +135,7 @@ export async function processFile(
     try {
       const base64 = await fileToBase64(file);
       const mimeType = fileKind === "pdf" ? "application/pdf" : file.type || "image/png";
-      const geminiResult = await geminiOCR(base64, mimeType);
+      const geminiResult = await geminiOCR(base64, mimeType, callbacks?.signal);
       const textForParsing = geminiJsonToText(geminiResult);
       const tests = parseLabText(textForParsing, date).map((t) => ({
         ...t,
@@ -141,6 +152,7 @@ export async function processFile(
 
   // 4. Tesseract.js fallback for images and scanned PDFs
   callbacks?.onStatus?.("Running local OCR engine (Tesseract.js)...");
+  if (callbacks?.signal?.aborted) throw new DOMException("File processing was cancelled", "AbortError");
   try {
     const ocrText = await tesseractOCR(file);
     if (ocrText.trim().length > 0) {

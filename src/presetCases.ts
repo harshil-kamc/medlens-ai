@@ -37,8 +37,13 @@ LDL Cholesterol\t128\tmg/dL\t< 100
 Serum Creatinine\t0.9\tmg/dL\t0.6 - 1.2
 eGFR\t94\tmL/min\t> 60
 TSH\t5.8\tuIU/mL\t0.4 - 4.5`,
-    previousReportDate: null,
-    previousReportText: null,
+    previousReportDate: "2026-03-15",
+    previousReportText: `HbA1c\t5.4\t%\t4.0 - 5.6
+Fasting Plasma Glucose\t92\tmg/dL\t70 - 99
+LDL Cholesterol\t110\tmg/dL\t< 100
+Serum Creatinine\t0.8\tmg/dL\t0.6 - 1.2
+eGFR\t98\tmL/min\t> 60
+TSH\t2.1\tuIU/mL\t0.4 - 4.5`,
   },
 ];
 

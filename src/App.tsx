@@ -9,7 +9,6 @@ import {
   Columns2,
   History,
   Save,
-  LayoutDashboard,
   FileText,
   Sparkles,
   ArrowRight,
@@ -23,7 +22,8 @@ import {
   generateQuestions,
   computeDeltas,
   countProvenance,
-  computeStatus,
+  computeStatusWithDanger,
+  generateInsight,
 } from "./lib/medical";
 import { PRESET_CASES, loadPresetCase } from "./presetCases";
 import {
@@ -51,6 +51,7 @@ import { LoginView } from "./components/LoginView";
 import { Sidebar, type NavSection } from "./components/Sidebar";
 import { ReviewDrawer } from "./components/ReviewDrawer";
 import { AuditLogDrawer } from "./components/AuditLogDrawer";
+import { ReportDownload } from "./components/ReportDownload";
 
 function App() {
   const { mode } = useTheme();
@@ -238,10 +239,13 @@ function App() {
         prev.map((t) => {
           if (t.id !== id) return t;
           const newVal = isNaN(num) ? null : num;
+          const newStatus = newVal !== null ? computeStatusWithDanger(newVal, t.refRange, t.name) : "UNKNOWN";
+          const newInsight = newVal !== null ? generateInsight(t.name, newVal, newStatus) : undefined;
           return {
             ...t,
             value: newVal,
-            status: computeStatus(newVal, t.refRange),
+            status: newStatus,
+            insight: newInsight,
             provenance: "HUMAN_VERIFIED",
           };
         })
@@ -272,8 +276,6 @@ function App() {
   const questions = useMemo(() => generateQuestions(intake, currentTests), [intake, currentTests]);
   const deltas = useMemo(() => computeDeltas(currentTests, previousTests), [currentTests, previousTests]);
   const auditCounts = useMemo(() => countProvenance(currentTests, intake), [currentTests, intake]);
-
-  const hasData = currentTests.length > 0 || intake.name !== "" || intake.chiefSymptoms.length > 0;
 
   // Show login if not authenticated
   if (!user) {
@@ -348,7 +350,7 @@ function App() {
               <div className="hidden sm:block">
                 <p className={`text-xs font-semibold leading-tight ${dark ? "text-slate-200" : "text-slate-800"}`}>{user.name}</p>
                 <p className="text-[10px] text-slate-500 leading-tight">
-                  {user.role === "clinician" ? "Clinician" : "Patient"} · {user.id}
+                  Demo Workspace · {user.id}
                 </p>
               </div>
             </div>
@@ -467,9 +469,12 @@ function App() {
             {activeSection === "summary" && (
               <div className="space-y-5 animate-[fadeIn_0.3s_ease]">
                 <div className={cardCls}>
-                  <div className="mb-4 flex items-center gap-2">
-                    <Sparkles className="h-4 w-4 text-purple-400" />
-                    <h2 className={headingCls}>AI Patient-Friendly Summary</h2>
+                  <div className="mb-4 flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="h-4 w-4 text-purple-400" />
+                      <h2 className={headingCls}>AI Patient-Friendly Summary</h2>
+                    </div>
+                    <ReportDownload intake={intake} tests={currentTests} deltas={deltas} conflicts={conflicts} summary={summary} />
                   </div>
                   <AISummary summary={summary} intake={intake} tests={currentTests} onAiQuestions={setAiQuestions} />
                 </div>
@@ -490,7 +495,7 @@ function App() {
                   <AlertTriangle className="h-4 w-4 text-rose-400" />
                   <h2 className={headingCls}>Inconsistency & Conflict Detection</h2>
                   {conflicts.length > 0 && (
-                    <span className="rounded-full bg-rose-500/20 px-2 py-0.5 text-[10px] font-semibold text-rose-300 border border-rose-500/30">
+                    <span className={`rounded-full bg-rose-500/20 px-2 py-0.5 text-[10px] font-semibold border border-rose-500/30 ${dark ? "text-rose-300" : "text-rose-700"}`}>
                       {conflicts.length} found
                     </span>
                   )}
@@ -536,9 +541,6 @@ function App() {
                 <AuditFooter counts={auditCounts} />
               </div>
             )}
-
-            {/* Always-visible audit footer */}
-            <AuditFooter counts={auditCounts} />
 
             {/* Disclaimer */}
             <p className="text-center text-[11px] text-slate-500 max-w-2xl mx-auto leading-relaxed pb-4">

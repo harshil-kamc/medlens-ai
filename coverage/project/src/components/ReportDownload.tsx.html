@@ -1,0 +1,223 @@
+
+<!doctype html>
+<html lang="en">
+
+<head>
+    <title>Code coverage report for project/src/components/ReportDownload.tsx</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../../../prettify.css" />
+    <link rel="stylesheet" href="../../../base.css" />
+    <link rel="shortcut icon" type="image/x-icon" href="../../../favicon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style type='text/css'>
+        .coverage-summary .sorter {
+            background-image: url(../../../sort-arrow-sprite.png);
+        }
+    </style>
+</head>
+    
+<body>
+<div class='wrapper'>
+    <div class='pad1'>
+        <h1><a href="../../../index.html">All files</a> / <a href="index.html">project/src/components</a> ReportDownload.tsx</h1>
+        <div class='clearfix'>
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">36.17% </span>
+                <span class="quiet">Statements</span>
+                <span class='fraction'>17/47</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">100% </span>
+                <span class="quiet">Branches</span>
+                <span class='fraction'>1/1</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">33.33% </span>
+                <span class="quiet">Functions</span>
+                <span class='fraction'>1/3</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">36.17% </span>
+                <span class="quiet">Lines</span>
+                <span class='fraction'>17/47</span>
+            </div>
+        
+            
+        </div>
+        <p class="quiet">
+            Press <em>n</em> or <em>j</em> to go to the next uncovered block, <em>b</em>, <em>p</em> or <em>k</em> for the previous block.
+        </p>
+        <template id="filterTemplate">
+            <div class="quiet">
+                Filter:
+                <input type="search" id="fileSearch">
+            </div>
+        </template>
+    </div>
+    <div class='status-line low'></div>
+    <pre><table class="coverage">
+<tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
+<a name='L2'></a><a href='#L2'>2</a>
+<a name='L3'></a><a href='#L3'>3</a>
+<a name='L4'></a><a href='#L4'>4</a>
+<a name='L5'></a><a href='#L5'>5</a>
+<a name='L6'></a><a href='#L6'>6</a>
+<a name='L7'></a><a href='#L7'>7</a>
+<a name='L8'></a><a href='#L8'>8</a>
+<a name='L9'></a><a href='#L9'>9</a>
+<a name='L10'></a><a href='#L10'>10</a>
+<a name='L11'></a><a href='#L11'>11</a>
+<a name='L12'></a><a href='#L12'>12</a>
+<a name='L13'></a><a href='#L13'>13</a>
+<a name='L14'></a><a href='#L14'>14</a>
+<a name='L15'></a><a href='#L15'>15</a>
+<a name='L16'></a><a href='#L16'>16</a>
+<a name='L17'></a><a href='#L17'>17</a>
+<a name='L18'></a><a href='#L18'>18</a>
+<a name='L19'></a><a href='#L19'>19</a>
+<a name='L20'></a><a href='#L20'>20</a>
+<a name='L21'></a><a href='#L21'>21</a>
+<a name='L22'></a><a href='#L22'>22</a>
+<a name='L23'></a><a href='#L23'>23</a>
+<a name='L24'></a><a href='#L24'>24</a>
+<a name='L25'></a><a href='#L25'>25</a>
+<a name='L26'></a><a href='#L26'>26</a>
+<a name='L27'></a><a href='#L27'>27</a>
+<a name='L28'></a><a href='#L28'>28</a>
+<a name='L29'></a><a href='#L29'>29</a>
+<a name='L30'></a><a href='#L30'>30</a>
+<a name='L31'></a><a href='#L31'>31</a>
+<a name='L32'></a><a href='#L32'>32</a>
+<a name='L33'></a><a href='#L33'>33</a>
+<a name='L34'></a><a href='#L34'>34</a>
+<a name='L35'></a><a href='#L35'>35</a>
+<a name='L36'></a><a href='#L36'>36</a>
+<a name='L37'></a><a href='#L37'>37</a>
+<a name='L38'></a><a href='#L38'>38</a>
+<a name='L39'></a><a href='#L39'>39</a>
+<a name='L40'></a><a href='#L40'>40</a>
+<a name='L41'></a><a href='#L41'>41</a>
+<a name='L42'></a><a href='#L42'>42</a>
+<a name='L43'></a><a href='#L43'>43</a>
+<a name='L44'></a><a href='#L44'>44</a>
+<a name='L45'></a><a href='#L45'>45</a>
+<a name='L46'></a><a href='#L46'>46</a>
+<a name='L47'></a><a href='#L47'>47</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span></td><td class="text"><pre class="prettyprint lang-js">import { Download } from "lucide-react";
+import type { Conflict, DeltaRow, IntakeData, LabTest } from "../types";
+&nbsp;
+interface Props {
+  intake: IntakeData;
+  tests: LabTest[];
+  deltas: DeltaRow[];
+  conflicts: Conflict[];
+  summary: string;
+}
+&nbsp;
+<span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >function escapeHtml(value: string): string {</span></span>
+<span class="cstat-no" title="statement not covered" >  return value.replace(/[&amp;&lt;&gt;"']/g, (character) =&gt; ({ "&amp;": "&amp;amp;", "&lt;": "&amp;lt;", "&gt;": "&amp;gt;", '"': "&amp;quot;", "'": "&amp;#039;" })[character] || character);</span>
+<span class="cstat-no" title="statement not covered" >}</span>
+&nbsp;
+export function ReportDownload({ intake, tests, deltas, conflicts, summary }: Props) {
+<span class="fstat-no" title="function not covered" >  function downloadReport() {</span>
+<span class="cstat-no" title="statement not covered" >    const abnormal = tests.filter((test) =&gt; test.status === "HIGH" || test.status === "LOW" || test.status === "DANGER");</span>
+<span class="cstat-no" title="statement not covered" >    const chartWidth = 760;</span>
+<span class="cstat-no" title="statement not covered" >    const chartHeight = 260;</span>
+<span class="cstat-no" title="statement not covered" >    const values = deltas.flatMap((row) =&gt; [row.previousValue, row.currentValue]).filter((value): value is number =&gt; value !== null);</span>
+<span class="cstat-no" title="statement not covered" >    const min = values.length ? Math.min(...values) : 0;</span>
+<span class="cstat-no" title="statement not covered" >    const max = values.length ? Math.max(...values) : 1;</span>
+<span class="cstat-no" title="statement not covered" >    const range = max - min || 1;</span>
+<span class="cstat-no" title="statement not covered" >    const points = deltas.map((row, index) =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >      const x = deltas.length &gt; 1 ? 70 + index * ((chartWidth - 100) / (deltas.length - 1)) : chartWidth / 2;</span>
+<span class="cstat-no" title="statement not covered" >      const y = (value: number | null) =&gt; value === null ? null : 25 + (chartHeight - 65) - ((value - min) / range) * (chartHeight - 65);</span>
+<span class="cstat-no" title="statement not covered" >      return { row, x, previousY: y(row.previousValue), currentY: y(row.currentValue) };</span>
+<span class="cstat-no" title="statement not covered" >    });</span>
+<span class="cstat-no" title="statement not covered" >    const line = (key: "previousY" | "currentY") =&gt; points.filter((point) =&gt; point[key] !== null).map((point, index) =&gt; `${index ? "L" : "M"} ${point.x} ${point[key]}`).join(" ");</span>
+<span class="cstat-no" title="statement not covered" >    const chart = `&lt;svg viewBox="0 0 ${chartWidth} ${chartHeight}" role="img" aria-label="Longitudinal comparison chart" width="100%"&gt;&lt;path d="${line("previousY")}" fill="none" stroke="#64748b" stroke-width="2"/&gt;&lt;path d="${line("currentY")}" fill="none" stroke="#0891b2" stroke-width="3"/&gt;${points.map((point) =&gt; `&lt;line x1="${point.x}" y1="${point.previousY ?? point.currentY}" x2="${point.x}" y2="${point.currentY ?? point.previousY}" stroke="#cbd5e1" stroke-dasharray="4 3"/&gt;`).join("")}${points.map((point) =&gt; `&lt;text x="${point.x}" y="${chartHeight - 20}" text-anchor="middle" font-size="9"&gt;${escapeHtml(point.row.name.slice(0, 14))}&lt;/text&gt;`).join("")}&lt;/svg&gt;`;</span>
+<span class="cstat-no" title="statement not covered" >    const cards = abnormal.length ? abnormal.map((test) =&gt; `&lt;article class="card"&gt;&lt;h3&gt;${escapeHtml(test.name)} &lt;span class="status ${test.status.toLowerCase()}"&gt;${test.status}&lt;/span&gt;&lt;/h3&gt;&lt;p class="value"&gt;${test.value ?? "—"} ${escapeHtml(test.unit || "")}&lt;/p&gt;&lt;p&gt;Reference: ${escapeHtml(test.refRange.raw || "Not printed")}&lt;/p&gt;&lt;p&gt;${escapeHtml(test.insight || "Review this result with your clinician.")}&lt;/p&gt;&lt;/article&gt;`).join("") : "&lt;p&gt;No high, low, or danger results were found.&lt;/p&gt;";</span>
+<span class="cstat-no" title="statement not covered" >    const conflictSection = conflicts.length ? conflicts.map((conflict) =&gt; `&lt;article class="card"&gt;&lt;h3&gt;${escapeHtml(conflict.title)} &lt;span class="status warning"&gt;${escapeHtml(conflict.severity)}&lt;/span&gt;&lt;/h3&gt;&lt;p&gt;${escapeHtml(conflict.detail)}&lt;/p&gt;&lt;p&gt;&lt;strong&gt;Intake:&lt;/strong&gt; ${escapeHtml(conflict.intakeStatement)}&lt;/p&gt;&lt;p&gt;&lt;strong&gt;Evidence:&lt;/strong&gt; ${escapeHtml(conflict.labEvidence)}&lt;/p&gt;&lt;/article&gt;`).join("") : "&lt;p&gt;No conflicts detected.&lt;/p&gt;";</span>
+<span class="cstat-no" title="statement not covered" >    const deltaSection = deltas.length ? `&lt;div class="chart"&gt;${chart}&lt;/div&gt;` : "&lt;p&gt;No matched previous results are available for a trend chart.&lt;/p&gt;";</span>
+<span class="cstat-no" title="statement not covered" >    const guidance = `&lt;h2&gt;What to do next&lt;/h2&gt;&lt;ul&gt;&lt;li&gt;Review abnormal results with your primary care clinician and ask whether repeat testing is needed.&lt;/li&gt;&lt;li&gt;Discuss symptoms, medicines, supplements, and relevant history with your clinician.&lt;/li&gt;&lt;li&gt;Do not start, stop, or change treatment based on this report alone.&lt;/li&gt;&lt;li&gt;Seek urgent local medical help for severe or rapidly worsening symptoms.&lt;/li&gt;&lt;/ul&gt;`;</span>
+<span class="cstat-no" title="statement not covered" >    const html = `&lt;!doctype html&gt;&lt;html&gt;&lt;head&gt;&lt;meta charset="utf-8"&gt;&lt;title&gt;MedLens Health Report&lt;/title&gt;&lt;style&gt;body{font:14px Arial,sans-serif;color:#172033;max-width:900px;margin:0 auto;padding:32px;line-height:1.5}h1{color:#075985;border-bottom:2px solid #06b6d4;padding-bottom:10px}h2{margin-top:28px;color:#075985}.meta,.card,.chart{border:1px solid #dbe4ee;border-radius:10px;padding:14px;margin:10px 0}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}.card h3{margin:0 0 6px}.value{font-size:24px;font-weight:bold;margin:4px 0}.status{font-size:11px;padding:3px 7px;border-radius:999px;background:#e2e8f0}.high,.danger{background:#ffe4e6;color:#be123c}.low{background:#fef3c7;color:#92400e}.warning{background:#fef3c7;color:#92400e}small{color:#64748b}&lt;/style&gt;&lt;/head&gt;&lt;body&gt;&lt;h1&gt;MedLens Health Report&lt;/h1&gt;&lt;div class="meta"&gt;&lt;strong&gt;Patient:&lt;/strong&gt; ${escapeHtml(intake.name || "Not provided")}&lt;br&gt;&lt;strong&gt;Generated:&lt;/strong&gt; ${new Date().toLocaleString()}&lt;br&gt;&lt;small&gt;Informational report only. Not a diagnosis or treatment recommendation.&lt;/small&gt;&lt;/div&gt;&lt;h2&gt;Summary&lt;/h2&gt;&lt;p&gt;${escapeHtml(summary).replace(/\n/g, "&lt;br&gt;")}&lt;/p&gt;${guidance}&lt;h2&gt;High and Low Results&lt;/h2&gt;&lt;div class="grid"&gt;${cards}&lt;/div&gt;&lt;h2&gt;Longitudinal Chart&lt;/h2&gt;${deltaSection}&lt;h2&gt;Conflicts&lt;/h2&gt;${conflictSection}&lt;footer&gt;&lt;small&gt;Consult a qualified healthcare provider for interpretation and decisions about your care.&lt;/small&gt;&lt;/footer&gt;&lt;/body&gt;&lt;/html&gt;`;</span>
+<span class="cstat-no" title="statement not covered" >    const blob = new Blob([html], { type: "text/html;charset=utf-8" });</span>
+<span class="cstat-no" title="statement not covered" >    const url = URL.createObjectURL(blob);</span>
+<span class="cstat-no" title="statement not covered" >    const link = document.createElement("a");</span>
+<span class="cstat-no" title="statement not covered" >    link.href = url;</span>
+<span class="cstat-no" title="statement not covered" >    link.download = `medlens-report-${new Date().toISOString().slice(0, 10)}.html`;</span>
+<span class="cstat-no" title="statement not covered" >    link.click();</span>
+<span class="cstat-no" title="statement not covered" >    URL.revokeObjectURL(url);</span>
+<span class="cstat-no" title="statement not covered" >  }</span>
+&nbsp;
+  return &lt;button type="button" onClick={downloadReport} disabled={tests.length === 0} className="inline-flex items-center gap-2 rounded-lg border border-brand-500/40 bg-brand-500/10 px-3 py-2 text-xs font-semibold text-brand-700 dark:text-brand-300 hover:bg-brand-500/20 disabled:cursor-not-allowed disabled:opacity-50"&gt;&lt;Download className="h-3.5 w-3.5" /&gt; Download Report&lt;/button&gt;;
+}</pre></td></tr></table></pre>
+
+                <div class='push'></div><!-- for sticky footer -->
+            </div><!-- /wrapper -->
+            <div class='footer quiet pad2 space-top1 center small'>
+                Code coverage generated by
+                <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
+                at 2026-09-05T13:31:16.558Z
+            </div>
+        <script src="../../../prettify.js"></script>
+        <script>
+            window.onload = function () {
+                prettyPrint();
+            };
+        </script>
+        <script src="../../../sorter.js"></script>
+        <script src="../../../block-navigation.js"></script>
+    </body>
+</html>
+    

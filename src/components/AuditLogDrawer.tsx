@@ -1,6 +1,8 @@
-import { X, History, Clock, User as UserIcon, Edit3, Plus, FileText } from "lucide-react";
+import { useRef } from "react";
+import { X, History, Clock, User as UserIcon, Edit3, FileText } from "lucide-react";
 import type { AuditEntry } from "../types";
 import { useTheme } from "./ThemeProvider";
+import { useDialogA11y } from "./useDialogA11y";
 
 interface Props {
   open: boolean;
@@ -21,6 +23,8 @@ function formatDate(ts: number): string {
 export function AuditLogDrawer({ open, onClose, log }: Props) {
   const { mode } = useTheme();
   const dark = mode === "dark";
+  const panelRef = useRef<HTMLDivElement>(null);
+  useDialogA11y(open, onClose, panelRef);
 
   if (!open) return null;
 
@@ -31,7 +35,7 @@ export function AuditLogDrawer({ open, onClose, log }: Props) {
         onClick={onClose}
       />
 
-      <div className={`relative ml-auto flex h-full w-full max-w-lg flex-col shadow-2xl animate-[drawerIn_0.3s_ease] ${
+      <div ref={panelRef} role="dialog" aria-modal="true" aria-labelledby="audit-log-title" className={`relative ml-auto flex h-full w-full max-w-lg flex-col shadow-2xl animate-[drawerIn_0.3s_ease] ${
         dark ? "bg-slate-950 border-l border-slate-800" : "bg-white border-l border-slate-200"
       }`}>
         {/* Header */}
@@ -39,12 +43,13 @@ export function AuditLogDrawer({ open, onClose, log }: Props) {
           <div className="flex items-center gap-2">
             <History className="h-5 w-5 text-brand-500" />
             <div>
-              <h2 className="text-base font-bold text-slate-800 dark:text-white">Audit Log Timeline</h2>
+              <h2 id="audit-log-title" className="text-base font-bold text-slate-800 dark:text-white">Audit Log Timeline</h2>
               <p className="text-xs text-slate-500 mt-0.5">Real-time record of all user edits and actions</p>
             </div>
           </div>
           <button
             onClick={onClose}
+            aria-label="Close audit log"
             className={`rounded-lg p-2 transition ${dark ? "text-slate-400 hover:bg-slate-800 hover:text-slate-200" : "text-slate-500 hover:bg-slate-100"}`}
           >
             <X className="h-5 w-5" />

@@ -33,27 +33,27 @@ export function ConflictPanel({ conflicts }: Props) {
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                <h4 className="text-sm font-semibold text-rose-200">{conflict.title}</h4>
+                <h4 className={`text-sm font-semibold ${dark ? "text-rose-200" : "text-rose-700"}`}>{conflict.title}</h4>
                 <span
                   className={`rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider ${
                     conflict.severity === "critical"
-                      ? "bg-rose-600/30 text-rose-300"
-                      : "bg-amber-500/20 text-amber-300"
+                      ? `bg-rose-600/30 ${dark ? "text-rose-300" : "text-rose-700"}`
+                      : `bg-amber-500/20 ${dark ? "text-amber-300" : "text-amber-700"}`
                   }`}
                 >
                   {conflict.severity}
                 </span>
               </div>
-              <p className="mt-1 text-xs text-slate-400">{conflict.detail}</p>
+              <p className={`mt-1 text-xs ${dark ? "text-slate-400" : "text-slate-600"}`}>{conflict.detail}</p>
 
               <div className="mt-3 grid gap-2 sm:grid-cols-2">
                 <div className={`rounded-lg p-2 ${dark ? "bg-slate-900/50" : "bg-slate-100"}`}>
                   <p className="text-[9px] uppercase tracking-wider text-slate-500 mb-0.5">Intake Statement</p>
-                  <p className="text-xs text-slate-300">"{conflict.intakeStatement || "(empty)"}"</p>
+                  <p className={`text-xs ${dark ? "text-slate-300" : "text-slate-700"}`}>&quot;{conflict.intakeStatement || "(empty)"}&quot;</p>
                 </div>
                 <div className={`rounded-lg p-2 ${dark ? "bg-slate-900/50" : "bg-slate-100"}`}>
                   <p className="text-[9px] uppercase tracking-wider text-slate-500 mb-0.5">Lab Evidence</p>
-                  <p className="text-xs text-slate-300">{conflict.labEvidence}</p>
+                  <p className={`text-xs ${dark ? "text-slate-300" : "text-slate-700"}`}>{conflict.labEvidence}</p>
                 </div>
               </div>
             </div>

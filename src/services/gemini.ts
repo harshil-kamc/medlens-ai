@@ -83,7 +83,8 @@ MANDATORY SAFETY GUARDRAILS:
 export async function parseClinicalReport(
   content: string,
   isBase64: boolean,
-  mimeType?: string
+  mimeType?: string,
+  signal?: AbortSignal
 ): Promise<ClinicalReportResult> {
   const apiKey = getApiKey();
   if (!apiKey) {
@@ -109,6 +110,7 @@ export async function parseClinicalReport(
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
+    signal,
   });
 
   if (!resp.ok) {
@@ -166,7 +168,8 @@ export interface PatientSummaryResult {
  */
 export async function generatePatientSummary(
   intake: IntakeData,
-  labs: LabTest[]
+  labs: LabTest[],
+  signal?: AbortSignal
 ): Promise<PatientSummaryResult> {
   const apiKey = getApiKey();
   if (!apiKey) {
@@ -216,6 +219,7 @@ The summary MUST end with this disclaimer:
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
+    signal,
   });
 
   if (!resp.ok) {

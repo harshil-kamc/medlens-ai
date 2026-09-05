@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from "react";
-import { Upload, FileText, X, Type, ScanLine, Loader2, AlertCircle } from "lucide-react";
+import { FileText, X, Type, ScanLine, Loader2, AlertCircle } from "lucide-react";
 import type { ParsedDocument } from "../types";
 import { useTheme } from "./ThemeProvider";
 import { processFile, detectFileKind } from "../utils/fileProcessor";
@@ -46,6 +46,7 @@ export function Dropzone({ label, kind, doc, onFile, onPaste, onClear, accent, s
   const [processing, setProcessing] = useState(false);
   const [processError, setProcessError] = useState<string | null>(null);
   const [statusMsg, setStatusMsg] = useState<string | null>(null);
+  const processingRef = useRef<AbortController | null>(null);
   const { mode } = useTheme();
   const dark = mode === "dark";
 
@@ -57,6 +58,8 @@ export function Dropzone({ label, kind, doc, onFile, onPaste, onClear, accent, s
     }
   }, [scanning]);
 
+  useEffect(() => () => processingRef.current?.abort(), []);
+
   const s = ACCENT_STYLES[accent];
   const geminiReady = isGeminiConfigured();
 
@@ -64,6 +67,9 @@ export function Dropzone({ label, kind, doc, onFile, onPaste, onClear, accent, s
     if (!files || files.length === 0) return;
     const file = files[0];
     const fileKind = detectFileKind(file);
+    processingRef.current?.abort();
+    const controller = new AbortController();
+    processingRef.current = controller;
 
     setProcessing(true);
     setProcessError(null);
@@ -75,6 +81,7 @@ export function Dropzone({ label, kind, doc, onFile, onPaste, onClear, accent, s
 
       const result = await processFile(file, date, kind, {
         onStatus: (msg) => setStatusMsg(msg),
+        signal: controller.signal,
       });
       const format: "text" | "pdf" | "image" =
         fileKind === "pdf" ? "pdf" : fileKind === "image" ? "image" : "text";
@@ -88,6 +95,7 @@ export function Dropzone({ label, kind, doc, onFile, onPaste, onClear, accent, s
         setProcessError(result.rawText);
       }
     } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") return;
       setProcessError(
         err instanceof Error ? err.message : "Failed to process file"
       );
@@ -122,6 +130,7 @@ export function Dropzone({ label, kind, doc, onFile, onPaste, onClear, accent, s
           </div>
           <button
             onClick={onClear}
+            aria-label={`Remove ${kind} report`}
             className={`rounded-lg p-1 transition ${dark ? "text-slate-400 hover:bg-slate-700/50 hover:text-slate-200" : "text-slate-500 hover:bg-slate-200"}`}
           >
             <X className="h-4 w-4" />
@@ -142,10 +151,20 @@ export function Dropzone({ label, kind, doc, onFile, onPaste, onClear, accent, s
   return (
     <div>
       <div
+        role="button"
+        tabIndex={processing ? -1 : 0}
+        aria-label={`${label}: choose a file or drop one here`}
+        aria-busy={processing}
         onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
         onDragLeave={() => setDragging(false)}
         onDrop={(e) => { e.preventDefault(); setDragging(false); handleFiles(e.dataTransfer.files); }}
         onClick={() => !processing && inputRef.current?.click()}
+        onKeyDown={(e) => {
+          if (!processing && (e.key === "Enter" || e.key === " ")) {
+            e.preventDefault();
+            inputRef.current?.click();
+          }
+        }}
         className={`group relative cursor-pointer rounded-xl border-2 border-dashed p-5 text-center transition-all duration-200 ${
           processing ? "cursor-wait opacity-70" : ""
         } ${
@@ -174,6 +193,7 @@ export function Dropzone({ label, kind, doc, onFile, onPaste, onClear, accent, s
           type="file"
           accept=".txt,.pdf,.png,.jpg,.jpeg"
           className="hidden"
+          aria-label={`Choose ${kind} report file`}
           onChange={(e) => handleFiles(e.target.files)}
           disabled={processing}
         />
@@ -204,6 +224,7 @@ export function Dropzone({ label, kind, doc, onFile, onPaste, onClear, accent, s
           </div>
           <button
             onClick={() => setProcessError(null)}
+            aria-label="Dismiss extraction notice"
             className={`ml-auto rounded p-0.5 ${dark ? "text-slate-400 hover:text-slate-200" : "text-slate-400 hover:text-slate-600"}`}
           >
             <X className="h-3.5 w-3.5" />
@@ -224,6 +245,7 @@ export function Dropzone({ label, kind, doc, onFile, onPaste, onClear, accent, s
       <div className="mt-2 flex items-center gap-2">
         <button
           onClick={() => setShowPaste(!showPaste)}
+          aria-expanded={showPaste}
           className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px] font-medium border transition ${
             dark ? "text-slate-300 border-slate-700" : "text-slate-600 border-slate-300"
           } ${s.pasteBtn} hover:bg-slate-800/40`}
@@ -235,6 +257,7 @@ export function Dropzone({ label, kind, doc, onFile, onPaste, onClear, accent, s
       {showPaste && (
         <div className="mt-2 space-y-2 animate-[fadeIn_0.2s_ease]">
           <textarea
+            aria-label={`Paste ${kind} report text`}
             value={pasteText}
             onChange={(e) => setPasteText(e.target.value)}
             placeholder="Paste lab report text here (e.g. Hemoglobin 10.2 g/dL 12.0 - 15.5)..."
@@ -245,6 +268,7 @@ export function Dropzone({ label, kind, doc, onFile, onPaste, onClear, accent, s
           />
           <div className="flex gap-2">
             <input
+              aria-label={`${kind} report date`}
               type="date"
               className={`rounded-lg border px-2 py-1 text-xs focus:outline-none ${
                 dark ? "bg-slate-900/60 border-slate-700 text-slate-300 focus:border-slate-500"

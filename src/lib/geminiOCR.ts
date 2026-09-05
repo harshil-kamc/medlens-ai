@@ -87,7 +87,8 @@ export function detectFileKind(file: File): "text" | "pdf" | "image" {
  */
 export async function geminiOCR(
   base64Data: string,
-  mimeType: string
+  mimeType: string,
+  signal?: AbortSignal
 ): Promise<string> {
   const apiKey = getApiKey();
   if (!apiKey) {
@@ -110,6 +111,7 @@ export async function geminiOCR(
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
+    signal,
   });
 
   if (!resp.ok) {

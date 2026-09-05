@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { X, FileText, Check, AlertCircle } from "lucide-react";
 import type { LabTest } from "../types";
 import { StatusBadge, ProvenanceBadge, ConfidenceBadge } from "./Badges";
 import { useTheme } from "./ThemeProvider";
+import { useDialogA11y } from "./useDialogA11y";
 
 interface Props {
   open: boolean;
@@ -16,6 +17,8 @@ interface Props {
 export function ReviewDrawer({ open, onClose, tests, rawText, user, onConfirmOverride }: Props) {
   const { mode } = useTheme();
   const dark = mode === "dark";
+  const panelRef = useRef<HTMLDivElement>(null);
+  useDialogA11y(open, onClose, panelRef);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
 
@@ -41,7 +44,7 @@ export function ReviewDrawer({ open, onClose, tests, rawText, user, onConfirmOve
             /^\d+\.?\d*$/.test(part) ? (
               <mark
                 key={i}
-                className="rounded bg-amber-300/30 px-0.5 text-amber-200 border border-amber-400/20"
+                className={`rounded bg-amber-300/30 px-0.5 border border-amber-400/20 ${dark ? "text-amber-200" : "text-amber-800"}`}
               >
                 {part}
               </mark>
@@ -63,13 +66,13 @@ export function ReviewDrawer({ open, onClose, tests, rawText, user, onConfirmOve
       />
 
       {/* Drawer */}
-      <div className={`relative ml-auto flex h-full w-full max-w-5xl flex-col shadow-2xl animate-[drawerIn_0.3s_ease] ${
+      <div ref={panelRef} role="dialog" aria-modal="true" aria-labelledby="review-drawer-title" className={`relative ml-auto flex h-full w-full max-w-5xl flex-col shadow-2xl animate-[drawerIn_0.3s_ease] ${
         dark ? "bg-slate-950 border-l border-slate-800" : "bg-white border-l border-slate-200"
       }`}>
         {/* Header */}
         <div className={`flex items-center justify-between border-b px-5 py-4 ${dark ? "border-slate-800" : "border-slate-200"}`}>
           <div>
-            <h2 className="text-base font-bold text-slate-800 dark:text-white flex items-center gap-2">
+            <h2 id="review-drawer-title" className="text-base font-bold text-slate-800 dark:text-white flex items-center gap-2">
               <FileText className="h-5 w-5 text-brand-500" />
               Side-by-Side Source Inspection
             </h2>
@@ -77,6 +80,7 @@ export function ReviewDrawer({ open, onClose, tests, rawText, user, onConfirmOve
           </div>
           <button
             onClick={onClose}
+            aria-label="Close source inspection"
             className={`rounded-lg p-2 transition ${dark ? "text-slate-400 hover:bg-slate-800 hover:text-slate-200" : "text-slate-500 hover:bg-slate-100"}`}
           >
             <X className="h-5 w-5" />

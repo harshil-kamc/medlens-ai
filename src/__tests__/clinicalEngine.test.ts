@@ -1,105 +1,99 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
+import {
+  computeDeltas,
+  detectConflicts,
+  generateSummary,
+  generateInsight,
+  normalizeTerm,
+  parseLabText,
+} from "../lib/medical";
+import { MAX_UPLOAD_BYTES, processFile } from "../utils/fileProcessor";
+import type { IntakeData, LabTest } from "../types";
 
-// 1. Deterministic Range Evaluator
-export function evaluateReferenceRange(
-  value: number,
-  rangeStr: string
-): "HIGH" | "LOW" | "NORMAL" | "UNKNOWN" {
-  if (!rangeStr || rangeStr.trim() === "" || rangeStr.toLowerCase().includes("no reference")) {
-    return "UNKNOWN";
-  }
+const intake: IntakeData = {
+  name: "Jordan Lee",
+  patientId: "PT-00001",
+  age: "45",
+  biologicalSex: "Male",
+  chiefSymptoms: [],
+  conditions: "No history of diabetes",
+  allergies: "No known allergies",
+  medications: "None",
+  notes: "",
+};
 
-  const cleanRange = rangeStr.trim();
-
-  // Single-sided inequality bounds: < X
-  if (cleanRange.startsWith("<")) {
-    const max = parseFloat(cleanRange.replace("<", "").trim());
-    return value < max ? "NORMAL" : "HIGH";
-  }
-
-  // Single-sided inequality bounds: > X
-  if (cleanRange.startsWith(">")) {
-    const min = parseFloat(cleanRange.replace(">", "").trim());
-    return value > min ? "NORMAL" : "LOW";
-  }
-
-  // Standard Range: Min - Max
-  if (cleanRange.includes("-")) {
-    const [minStr, maxStr] = cleanRange.split("-");
-    const min = parseFloat(minStr.trim());
-    const max = parseFloat(maxStr.trim());
-
-    if (isNaN(min) || isNaN(max)) return "UNKNOWN";
-    if (value < min) return "LOW";
-    if (value > max) return "HIGH";
-    return "NORMAL";
-  }
-
-  return "UNKNOWN";
+function labTest(overrides: Partial<LabTest>): LabTest {
+  return {
+    id: "test-id",
+    name: "Fasting Plasma Glucose",
+    value: 114,
+    unit: "mg/dL",
+    refRange: { min: 70, max: 100, upperOnly: null, lowerOnly: null, raw: "70 - 100 mg/dL" },
+    status: "HIGH",
+    reportDate: "2025-01-01",
+    source: "current",
+    provenance: "SYSTEM_DERIVED",
+    ...overrides,
+  };
 }
 
-// 2. Terminology Normalization Engine
-export function normalizeTestName(rawName: string): string {
-  const normalized = rawName.trim().toLowerCase();
-  if (normalized === "hgb" || normalized === "hb") return "Hemoglobin";
-  if (normalized === "cr" || normalized === "creat") return "Serum Creatinine";
-  if (normalized.includes("glucose") || normalized === "fbg") return "Fasting Plasma Glucose";
-  if (normalized === "a1c" || normalized.includes("hba1c")) return "Hemoglobin A1c";
-  return rawName;
-}
-
-// 3. Heuristic Conflict Engine
-export function detectGlycemicConflict(
-  selfReportedNotes: string,
-  glucoseVal?: number,
-  hba1cVal?: number
-): boolean {
-  const claimsNoDiabetes =
-    selfReportedNotes.toLowerCase().includes("no history of diabetes") ||
-    selfReportedNotes.toLowerCase().includes("none");
-  const hasElevatedGlucose =
-    (glucoseVal !== undefined && glucoseVal > 100) ||
-    (hba1cVal !== undefined && hba1cVal > 5.7);
-
-  return claimsNoDiabetes && hasElevatedGlucose;
-}
-
-// ================================================================
-// AUTOMATED TEST SUITE
-// ================================================================
-describe("MedLens Clinical Engine Unit Tests", () => {
-  it("evaluates single-sided upper bounds (< 100) correctly", () => {
-    expect(evaluateReferenceRange(128, "< 100")).toBe("HIGH");
-    expect(evaluateReferenceRange(85, "< 100")).toBe("NORMAL");
+describe("production clinical engine", () => {
+  it("normalizes common laboratory terminology", () => {
+    expect(normalizeTerm("  fasting glucose ")).toBe("Fasting Plasma Glucose");
+    expect(normalizeTerm("HbA1c")).toBe("HbA1c");
   });
 
-  it("evaluates single-sided lower bounds (> 60) correctly", () => {
-    expect(evaluateReferenceRange(94, "> 60")).toBe("NORMAL");
-    expect(evaluateReferenceRange(45, "> 60")).toBe("LOW");
+  it("parses lab values, units, and reference ranges", () => {
+    const tests = parseLabText("Hemoglobin  10.2  g/dL  12.0 - 15.5", "2025-01-01");
+
+    expect(tests).toHaveLength(1);
+    expect(tests[0]).toMatchObject({
+      name: "Hemoglobin",
+      value: 10.2,
+      unit: "g/dL",
+      status: "LOW",
+      reportDate: "2025-01-01",
+    });
   });
 
-  it("evaluates standard ranges (4.0 - 5.6) correctly", () => {
-    expect(evaluateReferenceRange(6.2, "4.0 - 5.6")).toBe("HIGH");
-    expect(evaluateReferenceRange(4.8, "4.0 - 5.6")).toBe("NORMAL");
-    expect(evaluateReferenceRange(3.2, "4.0 - 5.6")).toBe("LOW");
+  it("detects a glycemic conflict from production data", () => {
+    const conflicts = detectConflicts(intake, [labTest({ name: "Fasting Plasma Glucose" })]);
+
+    expect(conflicts).toHaveLength(1);
+    expect(conflicts[0]).toMatchObject({ type: "glycemic", severity: "warning" });
   });
 
-  it("returns UNKNOWN for missing ranges without inventing bounds", () => {
-    expect(evaluateReferenceRange(12, "")).toBe("UNKNOWN");
-    expect(evaluateReferenceRange(12, "No reference range on source")).toBe("UNKNOWN");
+  it("does not report a glycemic conflict for an in-range result", () => {
+    const conflicts = detectConflicts(intake, [labTest({ value: 85, status: "NORMAL" })]);
+
+    expect(conflicts).toHaveLength(0);
   });
 
-  it("normalizes clinical laboratory terminology", () => {
-    expect(normalizeTestName("Hb")).toBe("Hemoglobin");
-    expect(normalizeTestName("HGB")).toBe("Hemoglobin");
-    expect(normalizeTestName("Cr")).toBe("Serum Creatinine");
-    expect(normalizeTestName("FBG")).toBe("Fasting Plasma Glucose");
+  it("computes longitudinal deltas and trends", () => {
+    const previous = labTest({ value: 90, source: "previous", reportDate: "2024-01-01" });
+    const current = labTest({ value: 114, source: "current" });
+    const [delta] = computeDeltas([current], [previous]);
+
+    expect(delta).toMatchObject({ previousValue: 90, currentValue: 114, delta: 24, trend: "UP" });
   });
 
-  it("triggers conflict alert when intake claims No Diabetes but Glucose/HbA1c is high", () => {
-    const intake =
-      "None (Self-reports no history of diabetes, elevated blood sugar, thyroid dysfunction, or kidney disease).";
-    expect(detectGlycemicConflict(intake, 114, 6.2)).toBe(true);
-    expect(detectGlycemicConflict(intake, 85, 5.2)).toBe(false);
+  it("keeps summaries informational and non-diagnostic", () => {
+    const summary = generateSummary(intake, [labTest({ value: 85, status: "NORMAL" })]);
+
+    expect(summary).toContain("not a medical diagnosis");
+    expect(summary).toContain("healthcare provider");
+  });
+
+  it("keeps result insights informational", () => {
+    const insight = generateInsight("Fasting Plasma Glucose", 126, "DANGER");
+
+    expect(insight).toContain("cannot establish a diagnosis");
+    expect(insight).not.toContain("Recommendation:");
+  });
+
+  it("rejects uploads larger than the processing limit", async () => {
+    const largeFile = new File([new Uint8Array(MAX_UPLOAD_BYTES + 1)], "large.txt", { type: "text/plain" });
+
+    await expect(processFile(largeFile, null, "current")).rejects.toThrow("too large");
   });
 });

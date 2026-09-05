@@ -1,5 +1,5 @@
 import type { Provenance } from "../types";
-import { PROVENANCE_META_DARK, PROVENANCE_META_LIGHT } from "./Badges";
+import { PROVENANCE_META_DARK, PROVENANCE_META_LIGHT } from "./badgeMeta";
 import { BarChart3 } from "lucide-react";
 import { useTheme } from "./ThemeProvider";
 

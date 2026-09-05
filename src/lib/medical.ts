@@ -1,4 +1,4 @@
-import type { IntakeData, LabTest, ParsedDocument, Conflict, DeltaRow, RefRange, RangeStatus, Trend, Provenance, LabCategory } from "../types";
+import type { IntakeData, LabTest, Conflict, DeltaRow, RefRange, RangeStatus, Trend, Provenance, LabCategory } from "../types";
 
 export const emptyIntake: IntakeData = {
   name: "",
@@ -350,7 +350,7 @@ export function getCategory(canonicalName: string): LabCategory {
   return "other";
 }
 
-function computeStatusWithDanger(value: number, range: RefRange, canonicalName: string): RangeStatus {
+export function computeStatusWithDanger(value: number, range: RefRange, canonicalName: string): RangeStatus {
   const baseStatus = computeStatus(value, range);
   if (baseStatus === "HIGH") {
     const threshold = DANGER_THRESHOLDS[canonicalName];
@@ -362,12 +362,10 @@ function computeStatusWithDanger(value: number, range: RefRange, canonicalName: 
 }
 
 export function generateInsight(canonicalName: string, value: number, status: RangeStatus): string {
-  const std = STANDARD_RANGES[canonicalName];
-  if (std) return std.insight(value, status);
-  if (status === "HIGH") return `${canonicalName} reading of ${value} is above the expected range. Recommendation: Consult your physician to discuss these results and any follow-up testing.`;
-  if (status === "LOW") return `${canonicalName} reading of ${value} is below the expected range. Recommendation: Consult your physician to discuss these results and any follow-up testing.`;
-  if (status === "DANGER") return `${canonicalName} reading of ${value} is in a critical range. Recommendation: Seek medical evaluation promptly.`;
-  return `${canonicalName} reading of ${value} is within the normal range. No action needed.`;
+  if (status === "DANGER") return `${canonicalName} is ${value}, in a range that deserves prompt clinical review. This result alone cannot establish a diagnosis; seek appropriate medical guidance.`;
+  if (status === "HIGH") return `${canonicalName} is ${value}, above the listed reference range. This result alone cannot establish a diagnosis; discuss the result and any follow-up testing with your healthcare provider.`;
+  if (status === "LOW") return `${canonicalName} is ${value}, below the listed reference range. Reference ranges are context, not a diagnosis; discuss the result with your healthcare provider.`;
+  return `${canonicalName} is ${value}, within the listed reference range. Continue discussing your health history and symptoms with your healthcare provider.`;
 }
 
 /* ------------------------------------------------------------------ */
@@ -458,7 +456,7 @@ export function parseLabText(text: string, reportDate: string | null): LabTest[]
         parsed = { name: spaceParts[0], value: spaceParts[1], unit: spaceParts[2], range: "" };
       } else {
         // colon pattern "Hemoglobin: 10.2 g/dL (12.0 - 15.5)"
-        const colonMatch = line.match(/^([^:]+):\s*(\d+\.?\d*)\s*([^\(]*)\s*\(?\s*([0-9<>\-–.\s]+[a-zA-Z%\/]*)?\s*\)?$/);
+        const colonMatch = line.match(/^([^:]+):\s*(\d+\.?\d*)\s*([^()]*)\s*\(?\s*([0-9<>\-–.\s]+[a-zA-Z%/]*)?\s*\)?$/);
         if (colonMatch) {
           parsed = {
             name: colonMatch[1].trim(),

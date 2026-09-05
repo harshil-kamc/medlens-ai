@@ -9,7 +9,6 @@ import {
   AlertTriangle,
   HelpCircle,
   History,
-  Settings,
   Moon,
   Sun,
   LogOut,
@@ -26,7 +25,6 @@ export type NavSection =
   | "record"
   | "summary"
   | "conflicts"
-  | "questions"
   | "longitudinal"
   | "audit";
 
@@ -174,7 +172,7 @@ export function Sidebar({
             <div className="min-w-0 flex-1">
               <p className={`text-xs font-semibold truncate ${dark ? "text-slate-200" : "text-slate-800"}`}>{user.name}</p>
               <p className="text-[10px] text-slate-500 truncate">
-                {user.role === "clinician" ? "Clinician" : "Patient"} · {user.id}
+                Demo Workspace · {user.id}
               </p>
             </div>
           )}

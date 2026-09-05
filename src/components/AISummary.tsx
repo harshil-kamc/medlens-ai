@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
-import { Sparkles, HelpCircle, Loader2, RefreshCw, Zap } from "lucide-react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { Sparkles, HelpCircle, Loader2, RefreshCw, Zap, CheckCircle2, ShieldAlert, Stethoscope } from "lucide-react";
 import { useTheme } from "./ThemeProvider";
 import { isGeminiConfigured, generatePatientSummary } from "../services/gemini";
 import type { IntakeData, LabTest } from "../types";
@@ -11,31 +11,97 @@ interface SummaryProps {
   onAiQuestions?: (questions: string[] | null) => void;
 }
 
+interface GuidanceProps {
+  intake: IntakeData;
+  tests: LabTest[];
+}
+
+function PatientGuidance({ intake, tests }: GuidanceProps) {
+  const { mode } = useTheme();
+  const dark = mode === "dark";
+  const abnormal = tests.filter((test) => test.status === "HIGH" || test.status === "LOW" || test.status === "DANGER");
+  const high = abnormal.filter((test) => test.status === "HIGH" || test.status === "DANGER");
+  const low = abnormal.filter((test) => test.status === "LOW");
+  const hasSymptoms = intake.chiefSymptoms.length > 0;
+
+  const actions = [
+    abnormal.length > 0
+      ? `Book a review with your primary care clinician and bring this report. Discuss the ${abnormal.map((test) => test.name).join(", ")} results and whether repeat testing is appropriate.`
+      : "Keep regular health visits and share these results with your primary care clinician, especially if symptoms continue.",
+    hasSymptoms
+      ? `Tell your clinician about your reported symptoms: ${intake.chiefSymptoms.join(", ")}. Include when they started and whether they are changing.`
+      : "Keep a simple record of new or changing symptoms, medicines, supplements, and relevant family history.",
+    "Use the reference range printed on the report as context; results should be interpreted with your history, examination, and other tests.",
+  ];
+
+  const avoid = [
+    "Do not start, stop, or change medicines, supplements, or restrictive diets based on this report alone.",
+    high.length > 0 || low.length > 0
+      ? "Avoid assuming that a single high or low result confirms a diagnosis; temporary factors, collection conditions, and lab variation can affect results."
+      : "Avoid ignoring persistent symptoms just because a result is within its listed range.",
+    "Avoid sharing the report publicly; it contains personal health information.",
+  ];
+
+  return (
+    <div className={`mt-4 grid gap-3 sm:grid-cols-2`}>
+      <section className={`rounded-lg border p-3 ${dark ? "border-emerald-500/20 bg-emerald-500/5" : "border-emerald-200 bg-emerald-50"}`} aria-labelledby="health-actions-title">
+        <div className="mb-2 flex items-center gap-2">
+          <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+          <h4 id="health-actions-title" className={`text-xs font-semibold ${dark ? "text-emerald-300" : "text-emerald-800"}`}>What to do next</h4>
+        </div>
+        <ul className={`space-y-2 text-xs leading-relaxed ${dark ? "text-slate-300" : "text-slate-700"}`}>
+          {actions.map((action) => <li key={action} className="list-disc ml-4">{action}</li>)}
+        </ul>
+      </section>
+      <section className={`rounded-lg border p-3 ${dark ? "border-amber-500/20 bg-amber-500/5" : "border-amber-200 bg-amber-50"}`} aria-labelledby="health-avoid-title">
+        <div className="mb-2 flex items-center gap-2">
+          <ShieldAlert className="h-4 w-4 text-amber-500" />
+          <h4 id="health-avoid-title" className={`text-xs font-semibold ${dark ? "text-amber-300" : "text-amber-800"}`}>What to avoid and why</h4>
+        </div>
+        <ul className={`space-y-2 text-xs leading-relaxed ${dark ? "text-slate-300" : "text-slate-700"}`}>
+          {avoid.map((item) => <li key={item} className="list-disc ml-4">{item}</li>)}
+        </ul>
+      </section>
+      <div className={`sm:col-span-2 flex items-start gap-2 rounded-lg border p-3 ${dark ? "border-cyan-500/20 bg-cyan-500/5" : "border-cyan-200 bg-cyan-50"}`}>
+        <Stethoscope className="mt-0.5 h-4 w-4 flex-shrink-0 text-cyan-600" />
+        <p className={`text-xs leading-relaxed ${dark ? "text-slate-300" : "text-slate-700"}`}>
+          <strong className={dark ? "text-cyan-300" : "text-cyan-800"}>Who to consult:</strong> Start with your primary care clinician. They can decide whether you need a specialist based on your history, symptoms, examination, and trends. Seek urgent local medical help for severe or rapidly worsening symptoms; this report cannot assess emergencies.
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export function AISummary({ summary, intake, tests, onAiQuestions }: SummaryProps) {
   const { mode } = useTheme();
   const dark = mode === "dark";
   const geminiReady = isGeminiConfigured();
 
   const [aiSummary, setAiSummary] = useState<string | null>(null);
-  const [aiQuestions, setAiQuestions] = useState<string[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const requestRef = useRef<AbortController | null>(null);
 
   const fetchAiSummary = useCallback(async () => {
     if (!geminiReady || tests.length === 0) return;
+    requestRef.current?.abort();
+    const controller = new AbortController();
+    requestRef.current = controller;
     setLoading(true);
     setError(null);
     try {
-      const result = await generatePatientSummary(intake, tests);
+      const result = await generatePatientSummary(intake, tests, controller.signal);
       setAiSummary(result.summary);
-      setAiQuestions(result.questions);
       onAiQuestions?.(result.questions);
     } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") return;
       setError(err instanceof Error ? err.message : "Failed to generate AI summary");
     } finally {
-      setLoading(false);
+      if (!controller.signal.aborted) setLoading(false);
     }
   }, [geminiReady, intake, tests, onAiQuestions]);
+
+  useEffect(() => () => requestRef.current?.abort(), []);
 
   // Auto-fetch when Gemini is configured and tests change
   useEffect(() => {
@@ -56,15 +122,13 @@ export function AISummary({ summary, intake, tests, onAiQuestions }: SummaryProp
   }
 
   return (
-    <div className={`rounded-xl border p-4 ${dark ? "border-cyan-500/20 bg-cyan-500/5" : "border-cyan-200 bg-cyan-50"}`}>
+    <div>
       <div className="flex items-center gap-2 mb-3">
-        <Sparkles className="h-4 w-4 text-cyan-400" />
-        <h3 className={`text-sm font-semibold ${dark ? "text-slate-200" : "text-slate-800"}`}>Patient-Friendly Summary</h3>
-        <span className="rounded-full bg-cyan-500/15 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-cyan-300 border border-cyan-500/30">
+        <span className={`rounded-full bg-cyan-500/15 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider border border-cyan-500/30 ${dark ? "text-cyan-300" : "text-cyan-700"}`}>
           Non-Diagnostic
         </span>
         {aiSummary && (
-          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-emerald-300 border border-emerald-500/30">
+          <span className={`inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider border border-emerald-500/30 ${dark ? "text-emerald-300" : "text-emerald-700"}`}>
             <Zap className="h-2.5 w-2.5" /> Gemini
           </span>
         )}
@@ -99,7 +163,7 @@ export function AISummary({ summary, intake, tests, onAiQuestions }: SummaryProp
             key={i}
             className={`text-sm leading-relaxed ${
               i === arr.length - 1 && para.toLowerCase().includes("disclaimer")
-                ? "text-slate-400 text-xs italic border-t border-slate-700/50 pt-2 mt-2"
+                ? `${dark ? "text-slate-400 border-slate-700/50" : "text-slate-600 border-slate-200"} text-xs italic border-t pt-2 mt-2`
                 : dark ? "text-slate-300" : "text-slate-700"
             }`}
           >
@@ -107,6 +171,7 @@ export function AISummary({ summary, intake, tests, onAiQuestions }: SummaryProp
           </p>
         ))}
       </div>
+      <PatientGuidance intake={intake} tests={tests} />
     </div>
   );
 }
@@ -133,7 +198,7 @@ export function ClarificationQuestions({ questions, aiQuestions }: QuestionsProp
   return (
     <div className="space-y-2">
       {aiQuestions && aiQuestions.length > 0 && (
-        <div className="mb-2 inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-emerald-300 border border-emerald-500/30">
+        <div className={`mb-2 inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider border border-emerald-500/30 ${dark ? "text-emerald-300" : "text-emerald-700"}`}>
           <Zap className="h-2.5 w-2.5" /> Generated by Gemini
         </div>
       )}

@@ -100,6 +100,18 @@ export function MedicalRecord({ tests, onEdit, onVerify, onOpenReview, canReview
               <p className="mt-2 text-[10px] text-slate-500 italic">{test.sourceMeta}</p>
             )}
 
+            {(test.status === "HIGH" || test.status === "LOW" || test.status === "DANGER") && (
+              <details className={`mt-3 rounded-lg border px-2.5 py-2 ${dark ? "border-slate-700/60 bg-slate-800/30" : "border-slate-200 bg-slate-50"}`}>
+                <summary className={`cursor-pointer text-[10px] font-semibold ${dark ? "text-cyan-300" : "text-cyan-700"}`}>Why this result is flagged</summary>
+                <div className={`mt-2 space-y-1 text-[10px] leading-relaxed ${dark ? "text-slate-400" : "text-slate-600"}`}>
+                  <p><strong>Observed:</strong> {test.value ?? "Not available"}{test.unit ? ` ${test.unit}` : ""}</p>
+                  <p><strong>Compared with:</strong> {test.refRange.raw || "No reference range printed on the source"}</p>
+                  <p><strong>Source:</strong> {test.provenance.replace(/_/g, " ").toLowerCase()}</p>
+                  {test.sourceMeta && <p><strong>Evidence note:</strong> {test.sourceMeta}</p>}
+                </div>
+              </details>
+            )}
+
             <div className="mt-3 flex items-center justify-between flex-wrap gap-2">
               <div className="flex items-center gap-1.5 flex-wrap">
                 <ProvenanceBadge provenance={test.provenance} />
