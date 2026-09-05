@@ -1,0 +1,75 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(24px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes laserScan {
+  0% { top: 0%; opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 4px rgba(244,63,94,0.4); }
+  50% { box-shadow: 0 0 12px rgba(244,63,94,0.7); }
+}
+
+@keyframes pulseGlowGreen {
+  0%, 100% { box-shadow: 0 0 4px rgba(16,185,129,0.3); }
+  50% { box-shadow: 0 0 10px rgba(16,185,129,0.5); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes drawerIn {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+.laser-scan-line {
+  animation: laserScan 1.8s ease-in-out;
+}
+
+.neon-rose {
+  color: #f43f5e;
+  animation: pulseGlow 2s ease-in-out infinite;
+}
+
+.neon-emerald {
+  color: #10b981;
+  animation: pulseGlowGreen 3s ease-in-out infinite;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #334155; }
