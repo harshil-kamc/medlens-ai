@@ -1,6 +1,6 @@
 export type Provenance = "USER_PROVIDED" | "AI_EXTRACTED" | "SYSTEM_DERIVED" | "HUMAN_VERIFIED";
 
-export type RangeStatus = "LOW" | "NORMAL" | "HIGH" | "UNKNOWN";
+export type RangeStatus = "LOW" | "NORMAL" | "HIGH" | "DANGER" | "UNKNOWN";
 
 export type Trend = "UP" | "DOWN" | "STABLE" | "NONE";
 
@@ -43,6 +43,8 @@ export interface RefRange {
   raw: string | null;
 }
 
+export type LabCategory = "vital" | "metabolic" | "lipid" | "renal" | "hematology" | "thyroid" | "other";
+
 export interface LabTest {
   id: string;
   name: string;
@@ -57,6 +59,9 @@ export interface LabTest {
   provenance: Provenance;
   sourceMeta?: string;
   confidence?: number;
+  category?: LabCategory;
+  insight?: string;
+  rangeSource?: "document" | "standard";
 }
 
 export interface Conflict {

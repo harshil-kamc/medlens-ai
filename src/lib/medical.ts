@@ -1,4 +1,4 @@
-import type { IntakeData, LabTest, ParsedDocument, Conflict, DeltaRow, RefRange, RangeStatus, Trend, Provenance } from "../types";
+import type { IntakeData, LabTest, ParsedDocument, Conflict, DeltaRow, RefRange, RangeStatus, Trend, Provenance, LabCategory } from "../types";
 
 export const emptyIntake: IntakeData = {
   name: "",
@@ -93,6 +93,281 @@ const TERM_MAP: Record<string, string> = {
 export function normalizeTerm(raw: string): string {
   const key = raw.trim().toLowerCase().replace(/\s+/g, " ").replace(/[^a-z0-9\s-]/g, "");
   return TERM_MAP[key] || raw.trim();
+}
+
+/* ------------------------------------------------------------------ */
+/*  STANDARD REFERENCE RANGE DICTIONARY                               */
+/* ------------------------------------------------------------------ */
+
+interface StandardRange {
+  refRange: RefRange;
+  unit: string;
+  category: LabCategory;
+  insight: (value: number, status: RangeStatus) => string;
+}
+
+const STANDARD_RANGES: Record<string, StandardRange> = {
+  "Systolic Blood Pressure": {
+    refRange: { min: null, max: 120, upperOnly: null, lowerOnly: null, raw: "< 120 mmHg" },
+    unit: "mmHg",
+    category: "vital",
+    insight: (v, s) => {
+      if (s === "DANGER") return `Systolic reading of ${v} mmHg indicates Stage 2 Hypertension (crisis range). Recommendation: Seek immediate medical evaluation. Reduce sodium intake, monitor blood pressure daily, and consult your physician for urgent assessment.`;
+      if (s === "HIGH") return `Systolic reading of ${v} mmHg indicates Stage 1 Hypertension. Recommendation: Reduce sodium intake, engage in regular aerobic exercise, limit alcohol, and consult your physician for routine evaluation.`;
+      return `Systolic reading of ${v} mmHg is within the normal range. Maintain a balanced diet low in sodium and continue regular physical activity to keep blood pressure healthy.`;
+    },
+  },
+  "Diastolic Blood Pressure": {
+    refRange: { min: null, max: 80, upperOnly: null, lowerOnly: null, raw: "< 80 mmHg" },
+    unit: "mmHg",
+    category: "vital",
+    insight: (v, s) => {
+      if (s === "DANGER") return `Diastolic reading of ${v} mmHg is in the Stage 2 Hypertension range. Recommendation: Seek immediate medical evaluation and monitor blood pressure closely.`;
+      if (s === "HIGH") return `Diastolic reading of ${v} mmHg indicates elevated blood pressure. Recommendation: Reduce dietary sodium, maintain a healthy weight, and follow up with your physician.`;
+      return `Diastolic reading of ${v} mmHg is within the normal range. Continue healthy lifestyle habits to maintain optimal blood pressure.`;
+    },
+  },
+  "Heart Rate": {
+    refRange: { min: 60, max: 100, upperOnly: null, lowerOnly: null, raw: "60 - 100 bpm" },
+    unit: "bpm",
+    category: "vital",
+    insight: (v, s) => {
+      if (s === "HIGH") return `Heart rate of ${v} bpm is elevated above the normal 60–100 bpm range (tachycardia). Recommendation: Reduce caffeine and stress, stay hydrated, and consult your physician if this persists at rest.`;
+      if (s === "LOW") return `Heart rate of ${v} bpm is below the normal 60–100 bpm range (bradycardia). Recommendation: If you experience dizziness or fatigue, consult your physician. Well-trained athletes may naturally have lower resting heart rates.`;
+      return `Heart rate of ${v} bpm is within the normal 60–100 bpm range. Continue regular cardiovascular exercise to maintain heart health.`;
+    },
+  },
+  "Body Temperature": {
+    refRange: { min: 36.5, max: 37.5, upperOnly: null, lowerOnly: null, raw: "36.5 - 37.5 \u00b0C" },
+    unit: "\u00b0C",
+    category: "vital",
+    insight: (v, s) => {
+      if (s === "HIGH") return `Body temperature of ${v}\u00b0C is above the normal range, which may indicate fever. Recommendation: Stay hydrated, rest, and consult your physician if temperature exceeds 39\u00b0C or persists beyond 48 hours.`;
+      if (s === "LOW") return `Body temperature of ${v}\u00b0C is below the normal range (hypothermia). Recommendation: Warm up gradually and seek medical attention if below 35\u00b0C.`;
+      return `Body temperature of ${v}\u00b0C is within the normal range. No action needed.`;
+    },
+  },
+  "HbA1c": {
+    refRange: { min: 4.0, max: 5.6, upperOnly: null, lowerOnly: null, raw: "4.0 - 5.6 %" },
+    unit: "%",
+    category: "metabolic",
+    insight: (v, s) => {
+      if (s === "DANGER") return `HbA1c of ${v}% is at or above the diabetes threshold (\u22656.5%). Recommendation: Consult your physician promptly for diabetes management. Dietary changes, regular exercise, and possibly medication are typically advised.`;
+      if (s === "HIGH") return `HbA1c of ${v}% is in the prediabetes range (5.7\u20136.4%). Recommendation: Reduce refined sugars and simple carbohydrates, increase physical activity, and discuss a monitoring plan with your physician.`;
+      return `HbA1c of ${v}% is within the normal range (4.0\u20135.6%). Maintain a balanced diet and regular exercise to keep blood sugar levels healthy.`;
+    },
+  },
+  "Fasting Plasma Glucose": {
+    refRange: { min: 70, max: 99, upperOnly: null, lowerOnly: null, raw: "70 - 99 mg/dL" },
+    unit: "mg/dL",
+    category: "metabolic",
+    insight: (v, s) => {
+      if (s === "DANGER") return `Fasting glucose of ${v} mg/dL is significantly elevated (\u2265126 mg/dL), consistent with diabetes. Recommendation: Consult your physician promptly for a comprehensive metabolic evaluation.`;
+      if (s === "HIGH") return `Fasting glucose of ${v} mg/dL is elevated (\u2265100 mg/dL), which may indicate prediabetes or diabetes. Recommendation: Reduce sugar intake, increase fiber, exercise regularly, and discuss follow-up testing with your physician.`;
+      if (s === "LOW") return `Fasting glucose of ${v} mg/dL is below the normal range (hypoglycemia). Recommendation: Eat regular balanced meals and consult your physician if you experience dizziness, sweating, or confusion.`;
+      return `Fasting glucose of ${v} mg/dL is within the normal range (70\u201399 mg/dL). Continue a balanced diet and regular activity to maintain healthy blood sugar.`;
+    },
+  },
+  "LDL Cholesterol": {
+    refRange: { min: null, max: 100, upperOnly: null, lowerOnly: null, raw: "< 100 mg/dL" },
+    unit: "mg/dL",
+    category: "lipid",
+    insight: (v, s) => {
+      if (s === "DANGER") return `LDL cholesterol of ${v} mg/dL is very high (\u2265160 mg/dL). Recommendation: Consult your physician for lipid management. Reduce saturated fat and dietary cholesterol, increase soluble fiber, and discuss whether medication is appropriate.`;
+      if (s === "HIGH") return `LDL cholesterol of ${v} mg/dL is elevated (\u2265130 mg/dL). Recommendation: Reduce saturated fat intake, increase dietary fiber, exercise regularly, and discuss a lipid management plan with your physician.`;
+      return `LDL cholesterol of ${v} mg/dL is within the optimal range (<100 mg/dL). Continue a heart-healthy diet and regular exercise to maintain optimal cholesterol.`;
+    },
+  },
+  "HDL Cholesterol": {
+    refRange: { min: 40, max: null, upperOnly: null, lowerOnly: null, raw: "> 40 mg/dL" },
+    unit: "mg/dL",
+    category: "lipid",
+    insight: (v, s) => {
+      if (s === "LOW") return `HDL cholesterol of ${v} mg/dL is below the protective threshold (<40 mg/dL). Recommendation: Increase physical activity, consume healthy fats (nuts, olive oil, fish), and consult your physician about cardiovascular risk.`;
+      return `HDL cholesterol of ${v} mg/dL is at or above the protective threshold (\u226540 mg/dL). Continue regular exercise and a heart-healthy diet.`;
+    },
+  },
+  "Total Cholesterol": {
+    refRange: { min: null, max: 200, upperOnly: null, lowerOnly: null, raw: "< 200 mg/dL" },
+    unit: "mg/dL",
+    category: "lipid",
+    insight: (v, s) => {
+      if (s === "HIGH") return `Total cholesterol of ${v} mg/dL is elevated (\u2265200 mg/dL). Recommendation: Reduce saturated and trans fats, increase fiber intake, exercise regularly, and discuss follow-up with your physician.`;
+      return `Total cholesterol of ${v} mg/dL is within the desirable range (<200 mg/dL). Continue heart-healthy lifestyle habits.`;
+    },
+  },
+  "Triglycerides": {
+    refRange: { min: null, max: 150, upperOnly: null, lowerOnly: null, raw: "< 150 mg/dL" },
+    unit: "mg/dL",
+    category: "lipid",
+    insight: (v, s) => {
+      if (s === "HIGH") return `Triglycerides of ${v} mg/dL are elevated (\u2265150 mg/dL). Recommendation: Reduce refined carbohydrates and alcohol, increase omega-3 intake, exercise regularly, and consult your physician.`;
+      return `Triglycerides of ${v} mg/dL are within the normal range (<150 mg/dL). Continue a balanced diet and regular physical activity.`;
+    },
+  },
+  "Serum Creatinine": {
+    refRange: { min: 0.6, max: 1.2, upperOnly: null, lowerOnly: null, raw: "0.6 - 1.2 mg/dL" },
+    unit: "mg/dL",
+    category: "renal",
+    insight: (v, s) => {
+      if (s === "HIGH") return `Serum creatinine of ${v} mg/dL is above the normal range (0.6\u20131.2 mg/dL), which may indicate reduced kidney function. Recommendation: Stay hydrated, avoid NSAIDs, and consult your physician for further renal evaluation including eGFR.`;
+      if (s === "LOW") return `Serum creatinine of ${v} mg/dL is below the normal range. This is uncommon and may reflect low muscle mass. Discuss with your physician if symptomatic.`;
+      return `Serum creatinine of ${v} mg/dL is within the normal range (0.6\u20131.2 mg/dL). Maintain hydration and regular check-ups to support kidney health.`;
+    },
+  },
+  "eGFR": {
+    refRange: { min: 60, max: null, upperOnly: null, lowerOnly: null, raw: "> 60 mL/min" },
+    unit: "mL/min",
+    category: "renal",
+    insight: (v, s) => {
+      if (s === "LOW") return `eGFR of ${v} mL/min is below the normal threshold (<60 mL/min), which may indicate reduced kidney function. Recommendation: Stay hydrated, avoid nephrotoxic medications, and consult your physician for a comprehensive kidney evaluation.`;
+      return `eGFR of ${v} mL/min is at or above the normal threshold (\u226560 mL/min). Continue healthy hydration and lifestyle habits to support kidney function.`;
+    },
+  },
+  "Hemoglobin": {
+    refRange: { min: 12.0, max: 15.5, upperOnly: null, lowerOnly: null, raw: "12.0 - 15.5 g/dL" },
+    unit: "g/dL",
+    category: "hematology",
+    insight: (v, s) => {
+      if (s === "LOW") return `Hemoglobin of ${v} g/dL is below the normal range (12.0\u201315.5 g/dL), suggesting anemia. Recommendation: Increase iron-rich foods (lean meats, leafy greens, legumes), and consult your physician for further evaluation of iron, B12, and folate.`;
+      if (s === "HIGH") return `Hemoglobin of ${v} g/dL is above the normal range. This may indicate dehydration or polycythemia. Recommendation: Ensure adequate hydration and discuss with your physician.`;
+      return `Hemoglobin of ${v} g/dL is within the normal range (12.0\u201315.5 g/dL). Maintain a balanced diet with adequate iron intake.`;
+    },
+  },
+  "White Blood Cell Count": {
+    refRange: { min: 4.0, max: 11.0, upperOnly: null, lowerOnly: null, raw: "4.0 - 11.0 K/uL" },
+    unit: "K/uL",
+    category: "hematology",
+    insight: (v, s) => {
+      if (s === "HIGH") return `WBC count of ${v} K/uL is elevated, which may indicate infection or inflammation. Recommendation: Consult your physician if accompanied by fever or other symptoms.`;
+      if (s === "LOW") return `WBC count of ${v} K/uL is below normal, which may indicate immune suppression. Recommendation: Consult your physician for further evaluation.`;
+      return `WBC count of ${v} K/uL is within the normal range (4.0\u201311.0 K/uL). No action needed.`;
+    },
+  },
+  "Platelet Count": {
+    refRange: { min: 150, max: 450, upperOnly: null, lowerOnly: null, raw: "150 - 450 K/uL" },
+    unit: "K/uL",
+    category: "hematology",
+    insight: (v, s) => {
+      if (s === "LOW") return `Platelet count of ${v} K/uL is below normal (<150 K/uL), which may increase bleeding risk. Recommendation: Avoid activities with injury risk and consult your physician.`;
+      if (s === "HIGH") return `Platelet count of ${v} K/uL is above normal (>450 K/uL), which may indicate inflammation or clotting risk. Recommendation: Consult your physician for further evaluation.`;
+      return `Platelet count of ${v} K/uL is within the normal range (150\u2013450 K/uL). No action needed.`;
+    },
+  },
+  "Thyroid Stimulating Hormone": {
+    refRange: { min: 0.4, max: 4.0, upperOnly: null, lowerOnly: null, raw: "0.4 - 4.0 mIU/L" },
+    unit: "mIU/L",
+    category: "thyroid",
+    insight: (v, s) => {
+      if (s === "HIGH") return `TSH of ${v} mIU/L is above the normal range (0.4\u20134.0 mIU/L), which may indicate hypothyroidism. Recommendation: Consult your physician for a full thyroid panel (Free T4, Free T3) and discuss whether thyroid medication is appropriate.`;
+      if (s === "LOW") return `TSH of ${v} mIU/L is below the normal range, which may indicate hyperthyroidism. Recommendation: Consult your physician for a full thyroid panel and symptom evaluation.`;
+      return `TSH of ${v} mIU/L is within the normal range (0.4\u20134.0 mIU/L). No action needed.`;
+    },
+  },
+  "Sodium": {
+    refRange: { min: 135, max: 145, upperOnly: null, lowerOnly: null, raw: "135 - 145 mmol/L" },
+    unit: "mmol/L",
+    category: "metabolic",
+    insight: (v, s) => {
+      if (s === "HIGH") return `Sodium of ${v} mmol/L is above the normal range (135\u2013145 mmol/L). Recommendation: Ensure adequate water intake and consult your physician.`;
+      if (s === "LOW") return `Sodium of ${v} mmol/L is below the normal range. Recommendation: Reduce excessive water intake, ensure balanced electrolytes, and consult your physician.`;
+      return `Sodium of ${v} mmol/L is within the normal range (135\u2013145 mmol/L). No action needed.`;
+    },
+  },
+  "Potassium": {
+    refRange: { min: 3.5, max: 5.0, upperOnly: null, lowerOnly: null, raw: "3.5 - 5.0 mmol/L" },
+    unit: "mmol/L",
+    category: "metabolic",
+    insight: (v, s) => {
+      if (s === "HIGH") return `Potassium of ${v} mmol/L is above the normal range (3.5\u20135.0 mmol/L), which can affect heart rhythm. Recommendation: Avoid high-potassium foods and supplements, and seek medical attention if symptomatic.`;
+      if (s === "LOW") return `Potassium of ${v} mmol/L is below the normal range. Recommendation: Increase potassium-rich foods (bananas, potatoes, spinach) and consult your physician.`;
+      return `Potassium of ${v} mmol/L is within the normal range (3.5\u20135.0 mmol/L). No action needed.`;
+    },
+  },
+  "ALT": {
+    refRange: { min: 7, max: 56, upperOnly: null, lowerOnly: null, raw: "7 - 56 U/L" },
+    unit: "U/L",
+    category: "other",
+    insight: (v, s) => {
+      if (s === "HIGH") return `ALT of ${v} U/L is above the normal range (7\u201356 U/L), which may indicate liver inflammation. Recommendation: Avoid alcohol, review medications with your physician, and discuss further liver testing.`;
+      return `ALT of ${v} U/L is within the normal range (7\u201356 U/L). No action needed.`;
+    },
+  },
+  "AST": {
+    refRange: { min: 10, max: 40, upperOnly: null, lowerOnly: null, raw: "10 - 40 U/L" },
+    unit: "U/L",
+    category: "other",
+    insight: (v, s) => {
+      if (s === "HIGH") return `AST of ${v} U/L is above the normal range (10\u201340 U/L), which may indicate liver inflammation. Recommendation: Avoid alcohol, review medications with your physician, and discuss further liver testing.`;
+      return `AST of ${v} U/L is within the normal range (10\u201340 U/L). No action needed.`;
+    },
+  },
+  "Ferritin": {
+    refRange: { min: 15, max: 150, upperOnly: null, lowerOnly: null, raw: "15 - 150 ng/mL" },
+    unit: "ng/mL",
+    category: "hematology",
+    insight: (v, s) => {
+      if (s === "LOW") return `Ferritin of ${v} ng/mL is below normal, indicating low iron stores. Recommendation: Increase iron-rich foods and consult your physician about iron supplementation.`;
+      if (s === "HIGH") return `Ferritin of ${v} ng/mL is above normal, which may indicate inflammation or iron overload. Recommendation: Consult your physician for further evaluation.`;
+      return `Ferritin of ${v} ng/mL is within the normal range (15\u2013150 ng/mL). No action needed.`;
+    },
+  },
+  "Vitamin D": {
+    refRange: { min: 30, max: 100, upperOnly: null, lowerOnly: null, raw: "30 - 100 ng/mL" },
+    unit: "ng/mL",
+    category: "other",
+    insight: (v, s) => {
+      if (s === "LOW") return `Vitamin D of ${v} ng/mL is below the normal range (<30 ng/mL), indicating deficiency. Recommendation: Increase safe sun exposure, consume vitamin D-rich foods (fatty fish, fortified dairy), and discuss supplementation with your physician.`;
+      return `Vitamin D of ${v} ng/mL is within the normal range (30\u2013100 ng/mL). Continue adequate sun exposure and dietary intake.`;
+    },
+  },
+  "Vitamin B12": {
+    refRange: { min: 200, max: 900, upperOnly: null, lowerOnly: null, raw: "200 - 900 pg/mL" },
+    unit: "pg/mL",
+    category: "other",
+    insight: (v, s) => {
+      if (s === "LOW") return `Vitamin B12 of ${v} pg/mL is below normal (<200 pg/mL), indicating deficiency. Recommendation: Increase B12-rich foods (meat, fish, dairy, fortified cereals) and consult your physician about supplementation.`;
+      return `Vitamin B12 of ${v} pg/mL is within the normal range (200\u2013900 pg/mL). No action needed.`;
+    },
+  },
+};
+
+const DANGER_THRESHOLDS: Record<string, { minDanger?: number; maxDanger?: number }> = {
+  "Systolic Blood Pressure": { maxDanger: 140 },
+  "Diastolic Blood Pressure": { maxDanger: 90 },
+  "HbA1c": { maxDanger: 6.5 },
+  "Fasting Plasma Glucose": { maxDanger: 126 },
+  "LDL Cholesterol": { maxDanger: 160 },
+};
+
+export function getStandardRange(canonicalName: string): StandardRange | null {
+  return STANDARD_RANGES[canonicalName] || null;
+}
+
+export function getCategory(canonicalName: string): LabCategory {
+  const std = STANDARD_RANGES[canonicalName];
+  if (std) return std.category;
+  return "other";
+}
+
+function computeStatusWithDanger(value: number, range: RefRange, canonicalName: string): RangeStatus {
+  const baseStatus = computeStatus(value, range);
+  if (baseStatus === "HIGH") {
+    const threshold = DANGER_THRESHOLDS[canonicalName];
+    if (threshold?.maxDanger !== undefined && value >= threshold.maxDanger) {
+      return "DANGER";
+    }
+  }
+  return baseStatus;
+}
+
+export function generateInsight(canonicalName: string, value: number, status: RangeStatus): string {
+  const std = STANDARD_RANGES[canonicalName];
+  if (std) return std.insight(value, status);
+  if (status === "HIGH") return `${canonicalName} reading of ${value} is above the expected range. Recommendation: Consult your physician to discuss these results and any follow-up testing.`;
+  if (status === "LOW") return `${canonicalName} reading of ${value} is below the expected range. Recommendation: Consult your physician to discuss these results and any follow-up testing.`;
+  if (status === "DANGER") return `${canonicalName} reading of ${value} is in a critical range. Recommendation: Seek medical evaluation promptly.`;
+  return `${canonicalName} reading of ${value} is within the normal range. No action needed.`;
 }
 
 /* ------------------------------------------------------------------ */
@@ -202,8 +477,15 @@ export function parseLabText(text: string, reportDate: string | null): LabTest[]
     if (isNaN(numericValue)) continue;
 
     const canonicalName = normalizeTerm(parsed.name);
-    const refRange = parseRefRange(parsed.range || null);
-    const status = computeStatus(numericValue, refRange);
+    const category = getCategory(canonicalName);
+    const docRange = parseRefRange(parsed.range || null);
+    const hasDocRange = docRange.min !== null || docRange.max !== null || docRange.upperOnly !== null || docRange.lowerOnly !== null;
+    const stdRange = getStandardRange(canonicalName);
+    const refRange = hasDocRange ? docRange : (stdRange ? stdRange.refRange : docRange);
+    const rangeSource: "document" | "standard" = hasDocRange ? "document" : (stdRange ? "standard" : "document");
+    const unit = parsed.unit || (stdRange ? stdRange.unit : "") || null;
+    const status = computeStatusWithDanger(numericValue, refRange, canonicalName);
+    const insight = generateInsight(canonicalName, numericValue, status);
 
     tests.push({
       id: `test-${idx++}-${Date.now()}`,
@@ -211,14 +493,17 @@ export function parseLabText(text: string, reportDate: string | null): LabTest[]
       rawName: parsed.name,
       value: numericValue,
       rawValue: parsed.value,
-      unit: parsed.unit || null,
+      unit,
       refRange,
       status,
       reportDate,
       source: "current",
       provenance: "AI_EXTRACTED",
-      sourceMeta: "Extracted from uploaded document",
-      confidence: 94 + (idx % 6) + Math.random() * 1.5, // 94-99.5%
+      sourceMeta: rangeSource === "standard" ? "Extracted from document; reference range supplemented from clinical standards" : "Extracted from uploaded document",
+      confidence: 94 + (idx % 6) + Math.random() * 1.5,
+      category,
+      insight,
+      rangeSource,
     });
   }
 

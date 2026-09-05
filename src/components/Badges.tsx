@@ -34,7 +34,24 @@ export function StatusBadge({ status }: { status: RangeStatus }) {
   const { mode } = useTheme();
   const dark = mode === "dark";
 
-  if (status === "HIGH" || status === "LOW") {
+  if (status === "DANGER") {
+    return (
+      <span
+        className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider border"
+        style={{
+          color: "#e11d48",
+          borderColor: dark ? "rgba(225,29,72,0.5)" : "rgba(225,29,72,0.4)",
+          background: dark ? "rgba(225,29,72,0.18)" : "rgba(225,29,72,0.12)",
+          animation: "pulseGlow 1.5s ease-in-out infinite",
+        }}
+      >
+        <span className="inline-block h-1.5 w-1.5 rounded-full bg-rose-600 animate-pulse" />
+        DANGER
+      </span>
+    );
+  }
+
+  if (status === "HIGH") {
     return (
       <span
         className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider border"
@@ -46,7 +63,24 @@ export function StatusBadge({ status }: { status: RangeStatus }) {
         }}
       >
         <span className="inline-block h-1.5 w-1.5 rounded-full bg-rose-500 animate-pulse" />
-        {status}
+        HIGH
+      </span>
+    );
+  }
+
+  if (status === "LOW") {
+    return (
+      <span
+        className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider border"
+        style={{
+          color: "#d97706",
+          borderColor: dark ? "rgba(217,119,6,0.4)" : "rgba(217,119,6,0.3)",
+          background: dark ? "rgba(217,119,6,0.12)" : "rgba(217,119,6,0.08)",
+          animation: "pulseGlow 2s ease-in-out infinite",
+        }}
+      >
+        <span className="inline-block h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
+        LOW
       </span>
     );
   }

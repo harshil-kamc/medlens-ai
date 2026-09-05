@@ -1,6 +1,6 @@
 import type { LabTest } from "../types";
 import { StatusBadge, ProvenanceBadge, ConfidenceBadge } from "./Badges";
-import { Activity, ArrowUp, ArrowDown, Minus, Columns2, Check } from "lucide-react";
+import { Activity, ArrowUp, ArrowDown, Minus, Columns2, Check, Lightbulb } from "lucide-react";
 import { useTheme } from "./ThemeProvider";
 
 interface Props {
@@ -68,13 +68,33 @@ export function MedicalRecord({ tests, onEdit, onVerify, onOpenReview, canReview
             <div className="mt-2 flex items-center justify-between gap-2">
               <div className="text-[11px] text-slate-500">
                 {test.refRange.raw ? (
-                  <span>Ref: <span className="font-mono text-slate-400">{test.refRange.raw}</span></span>
+                  <span>Ref: <span className="font-mono text-slate-400">{test.refRange.raw}</span>{test.rangeSource === "standard" && <span className="ml-1 text-[9px] text-amber-500/80">(standard)</span>}</span>
                 ) : (
                   <span className="text-slate-500" title="No reference range was printed on the source document">No printed bounds</span>
                 )}
               </div>
               <span className="text-[10px] text-slate-500">{test.reportDate || "No date"}</span>
             </div>
+
+            {test.insight && (
+              <div className={`mt-3 rounded-lg border p-2.5 ${
+                dark
+                  ? "border-slate-700/60 bg-slate-800/40"
+                  : "border-slate-200 bg-slate-50"
+              }`}>
+                <div className="flex items-start gap-1.5">
+                  <Lightbulb className={`h-3.5 w-3.5 mt-0.5 flex-shrink-0 ${
+                    test.status === "DANGER" ? "text-rose-400" :
+                    test.status === "HIGH" ? "text-rose-400" :
+                    test.status === "LOW" ? "text-amber-400" :
+                    "text-emerald-400"
+                  }`} />
+                  <p className={`text-[11px] leading-relaxed ${dark ? "text-slate-300" : "text-slate-600"}`}>
+                    {test.insight}
+                  </p>
+                </div>
+              </div>
+            )}
 
             {test.sourceMeta && (
               <p className="mt-2 text-[10px] text-slate-500 italic">{test.sourceMeta}</p>

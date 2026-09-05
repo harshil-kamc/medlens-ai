@@ -41,9 +41,12 @@ export interface ClinicalReportResult {
 const REPORT_SYSTEM_INSTRUCTION = `You are a clinical lab report OCR assistant integrated into a medical record system.
 Your job is to extract structured data from clinical lab reports with maximum accuracy.
 SAFETY: Do NOT invent, estimate, or fabricate reference ranges. If a range is not printed, return an empty string.
-Do NOT interpret results or provide medical opinions.`;
+Do NOT interpret results or provide medical opinions.
+SEPARATION: Vital signs and lab parameters must be separate entries. Never group patient demographics (Age, Gender, DOB) into lab result rows.
+CLEAN VALUES: The value field must contain ONLY a numeric value. Strip all units, text, dates, and qualifiers from the value field.
+CLEAN NAMES: Use clean, standardized parameter names: "Systolic Blood Pressure", "Diastolic Blood Pressure", "Heart Rate", "Body Temperature", "Glucose", "HbA1c", "Hemoglobin".`;
 
-const REPORT_OCR_PROMPT = `Analyze this clinical lab report and extract ALL test results.
+const REPORT_OCR_PROMPT = `Analyze this clinical lab report and extract ALL test results and vital signs.
 
 Return ONLY a JSON object with this exact shape (no markdown, no commentary):
 {
@@ -54,12 +57,13 @@ Return ONLY a JSON object with this exact shape (no markdown, no commentary):
   ]
 }
 
-Rules:
-- testName: The test name exactly as printed on the report.
-- value: The numeric observed value (number only, no unit suffix).
-- unit: The unit of measurement (e.g. "g/dL", "mg/dL", "%", "mmol/L"). Empty string if none.
+STRICT RULES:
+- testName: Use clean standardized names. For blood pressure, split into "Systolic Blood Pressure" and "Diastolic Blood Pressure" as separate rows. For heart rate use "Heart Rate". For temperature use "Body Temperature". Never group Age, Gender, DOB, or patient demographics into result rows.
+- value: MUST be a numeric value only (number type, not string). Strip all units, text, dates, and qualifiers. If the value is "128 mg/dL", return 128. If the value is "98.6 F", return 98.6. If a value cannot be parsed as a number, omit that result entirely.
+- unit: The unit of measurement only (e.g. "g/dL", "mg/dL", "%", "mmol/L", "mmHg", "bpm", "\\u00b0C"). Empty string if none.
 - referenceRange: The reference range exactly as printed (e.g. "12.0 - 15.5", "< 100", "> 60"). Empty string if not printed.
-- Do NOT invent or estimate reference ranges.`;
+- Do NOT invent or estimate reference ranges.
+- Each parameter must be its own row. Do NOT combine multiple values into a single entry.`;
 
 const SUMMARY_SYSTEM_INSTRUCTION = `You are a patient communication assistant for a medical record platform.
 You write plain-language summaries of lab results at a 6th-grade reading level.
