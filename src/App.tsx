@@ -14,7 +14,7 @@ import {
   Sparkles,
   ArrowRight,
 } from "lucide-react";
-import type { IntakeData, LabTest, ParsedDocument, Provenance, User, AuditEntry, ThemeMode } from "./types";
+import type { IntakeData, LabTest, ParsedDocument, Provenance, User, AuditEntry } from "./types";
 import {
   emptyIntake,
   parseLabText,
@@ -43,7 +43,7 @@ import { Dropzone } from "./components/Dropzone";
 import { MedicalRecord } from "./components/MedicalRecord";
 import { ConflictPanel } from "./components/ConflictPanel";
 import { AISummary, ClarificationQuestions } from "./components/AISummary";
-import { isGeminiConfigured as geminiReady } from "./services/gemini";
+
 import { LongitudinalComparison } from "./components/LongitudinalComparison";
 import { AuditFooter } from "./components/AuditFooter";
 import { PresetSelector } from "./components/PresetSelector";

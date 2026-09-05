@@ -1,5 +1,5 @@
 import type { LabTest } from "../types";
-import { parseLabText, normalizeTerm, parseRefRange, computeStatus } from "./medical";
+import { parseLabText } from "./medical";
 
 const GEMINI_ENDPOINT =
   "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
@@ -231,4 +231,4 @@ export async function processFile(
   };
 }
 
-export { parseLabText, normalizeTerm, parseRefRange, computeStatus };
+export { parseLabText };

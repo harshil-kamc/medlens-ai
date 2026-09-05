@@ -32,7 +32,7 @@ export function IntakeForm({ data, onChange, onContinue }: Props) {
   const labelCls = "mb-1.5 block text-[11px] font-medium uppercase tracking-wider text-slate-500";
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5" role="region" aria-label="Patient intake form">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <User className="h-4 w-4 text-brand-500" />
@@ -43,20 +43,21 @@ export function IntakeForm({ data, onChange, onContinue }: Props) {
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className={labelCls}>Patient Name</label>
-          <input value={data.name} onChange={(e) => update("name", e.target.value)} placeholder="Full name" className={inputCls} />
+          <label htmlFor="intake-name" className={labelCls}>Patient Name</label>
+          <input id="intake-name" value={data.name} onChange={(e) => update("name", e.target.value)} placeholder="Full name" className={inputCls} aria-describedby="intake-name-hint" />
+          <span id="intake-name-hint" className="sr-only">Enter the patient's full legal name</span>
         </div>
         <div>
-          <label className={labelCls}>Patient ID</label>
-          <input value={data.patientId} onChange={(e) => update("patientId", e.target.value)} placeholder="e.g. PT-00001" className={inputCls} />
+          <label htmlFor="intake-patientId" className={labelCls}>Patient ID</label>
+          <input id="intake-patientId" value={data.patientId} onChange={(e) => update("patientId", e.target.value)} placeholder="e.g. PT-00001" className={inputCls} />
         </div>
         <div>
-          <label className={labelCls}>Age</label>
-          <input value={data.age} onChange={(e) => update("age", e.target.value)} placeholder="Years" className={inputCls} />
+          <label htmlFor="intake-age" className={labelCls}>Age</label>
+          <input id="intake-age" value={data.age} onChange={(e) => update("age", e.target.value)} placeholder="Years" className={inputCls} inputMode="numeric" />
         </div>
         <div>
-          <label className={labelCls}>Biological Sex</label>
-          <select value={data.biologicalSex} onChange={(e) => update("biologicalSex", e.target.value)} className={inputCls}>
+          <label htmlFor="intake-biologicalSex" className={labelCls}>Biological Sex</label>
+          <select id="intake-biologicalSex" value={data.biologicalSex} onChange={(e) => update("biologicalSex", e.target.value)} className={inputCls}>
             <option value="">Select...</option>
             <option value="Female">Female</option>
             <option value="Male">Male</option>
@@ -66,14 +67,17 @@ export function IntakeForm({ data, onChange, onContinue }: Props) {
       </div>
 
       <div>
-        <label className={labelCls}>Chief Symptoms</label>
-        <div className="flex flex-wrap gap-1.5">
+        <span id="intake-symptoms-label" className={labelCls}>Chief Symptoms</span>
+        <div className="flex flex-wrap gap-1.5" role="group" aria-labelledby="intake-symptoms-label">
           {SYMPTOM_TAGS.map((symptom) => {
             const active = data.chiefSymptoms.includes(symptom);
             return (
               <button
                 key={symptom}
+                type="button"
                 onClick={() => toggleSymptom(symptom)}
+                aria-pressed={active}
+                aria-label={`${symptom} symptom ${active ? "selected" : "not selected"}`}
                 className={`rounded-full px-3 py-1 text-xs font-medium transition-all duration-150 ${
                   active
                     ? "bg-brand-500/20 text-brand-200 border border-brand-500/40"
@@ -90,29 +94,31 @@ export function IntakeForm({ data, onChange, onContinue }: Props) {
       </div>
 
       <div>
-        <label className={labelCls}>Self-Reported Conditions</label>
-        <textarea value={data.conditions} onChange={(e) => update("conditions", e.target.value)} placeholder="e.g. Hypertension, no history of diabetes..." className={`${inputCls} h-16 resize-none`} />
+        <label htmlFor="intake-conditions" className={labelCls}>Self-Reported Conditions</label>
+        <textarea id="intake-conditions" value={data.conditions} onChange={(e) => update("conditions", e.target.value)} placeholder="e.g. Hypertension, no history of diabetes..." className={`${inputCls} h-16 resize-none`} />
       </div>
 
       <div>
-        <label className={labelCls}>Known Allergies</label>
-        <input value={data.allergies} onChange={(e) => update("allergies", e.target.value)} placeholder="e.g. Penicillin, No known allergies" className={inputCls} />
+        <label htmlFor="intake-allergies" className={labelCls}>Known Allergies</label>
+        <input id="intake-allergies" value={data.allergies} onChange={(e) => update("allergies", e.target.value)} placeholder="e.g. Penicillin, No known allergies" className={inputCls} />
       </div>
 
       <div>
-        <label className={labelCls}>Active Medications</label>
-        <input value={data.medications} onChange={(e) => update("medications", e.target.value)} placeholder="e.g. Metformin 500mg, None" className={inputCls} />
+        <label htmlFor="intake-medications" className={labelCls}>Active Medications</label>
+        <input id="intake-medications" value={data.medications} onChange={(e) => update("medications", e.target.value)} placeholder="e.g. Metformin 500mg, None" className={inputCls} />
       </div>
 
       <div>
-        <label className={labelCls}>Additional Notes</label>
-        <textarea value={data.notes} onChange={(e) => update("notes", e.target.value)} placeholder="Any other relevant information..." className={`${inputCls} h-16 resize-none`} />
+        <label htmlFor="intake-notes" className={labelCls}>Additional Notes</label>
+        <textarea id="intake-notes" value={data.notes} onChange={(e) => update("notes", e.target.value)} placeholder="Any other relevant information..." className={`${inputCls} h-16 resize-none`} />
       </div>
 
       {onContinue && (
         <div className="sticky bottom-0 pt-3">
           <button
+            type="button"
             onClick={onContinue}
+            aria-label="Save patient profile and continue to document ingestion"
             className="group flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 py-3 px-6 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 transition-all duration-200 hover:scale-[1.02] hover:shadow-cyan-500/30"
           >
             Save & Continue to Document Ingestion
